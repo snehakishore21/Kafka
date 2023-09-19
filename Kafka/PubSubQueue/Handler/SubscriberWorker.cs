@@ -34,6 +34,7 @@ namespace Kafka.PubSubQueue.Handler
                     int curOffset = topicSubscriber.Offset;
                     while (curOffset >= topic.Messages.Count)
                     {
+                        //release the lock on an object and blocks the current thread until it reacquires the lock.
                         Monitor.Wait(topicSubscriber);
                     }
                     Message message = topic.Messages[curOffset];
@@ -45,6 +46,8 @@ namespace Kafka.PubSubQueue.Handler
                     if (topicSubscriber.Offset == curOffset)
                     {
                         topicSubscriber.Offset = newOffset;
+
+                        // PulseAll wakes up all threads that are waiting on the object's monitor.
                         Monitor.PulseAll(topicSubscriber);
                     }
                 }
@@ -55,6 +58,7 @@ namespace Kafka.PubSubQueue.Handler
         {
             lock (topicSubscriber)
             {
+                // PulseAll wakes up all threads that are waiting on the object's monitor.
                 Monitor.PulseAll(topicSubscriber);
             }
         }
